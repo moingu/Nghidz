@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NGHỊ ART | BÚT CHÌ BẠC | THE VOID WALKER</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Montserrat:wght@100;400;800&family=Space+Mono&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* * ========================================================================================
+         * SECTION 1: CORE CSS ARCHITECTURE (GIAO DIỆN HỆ THỐNG)
+         * Phong cách: Indie / Grunge / Dark Art / Glitch Core
+         * ========================================================================================
+         */
+      :root {
+        --void-black: #050505;
+        --silver: #e0e0e0;
+        --pencil-lead: #4a4a4a;
+        --accent-red: #8a0000;
+        --glitch-green: #00ff00;
+        --glitch-pink: #ff00ff;
+        --font-main: "Montserrat", sans-serif;
+        --font-art: "Cormorant Garamond", serif;
+        --font-code: "Space Mono", monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        cursor: none;
+      }
+
+      body {
+        background-color: var(--void-black);
+        overflow: hidden;
+        color: var(--silver);
+        height: 100vh;
+        width: 100vw;
+      }
+
+      /* --- CRT SCANLINE EFFECT --- */
+      body::before {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.25) 50%
+          ),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+          );
+        z-index: 999;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+      }
+
+      /* --- CUSTOM CURSOR --- */
+      #cursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--silver);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s, border-color 0.3s;
+        mix-blend-mode: difference;
+      }
+      #cursor-dot {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 4px;
+        background: var(--silver);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10001;
+        transform: translate(-50%, -50%);
+      }
+      body:active #cursor {
+        width: 15px;
+        height: 15px;
+        border-color: var(--accent-red);
+      }
+
+      /* --- BOOT SCREEN --- */
+      #boot-screen {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: var(--font-code);
+      }
+
+      .glitch-wrapper {
+        position: relative;
+        font-size: 5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 10px;
+        animation: glitch-skew 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) both
+          infinite;
+      }
+      .glitch-wrapper::before,
+      .glitch-wrapper::after {
+        content: "NGHỊ ART";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.8;
+      }
+      .glitch-wrapper::before {
+        color: var(--glitch-pink);
+        z-index: -1;
+        animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+      }
+      .glitch-wrapper::after {
+        color: var(--glitch-green);
+        z-index: -2;
+        animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
+      }
+
+      #start-btn {
+        margin-top: 60px;
+        padding: 20px 80px;
+        background: transparent;
+        border: 1px solid var(--silver);
+        color: var(--silver);
+        font-family: var(--font-code);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      #start-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: 0.3s;
+      }
+      #start-btn:hover::before {
+        left: 0;
+      }
+      #start-btn:hover {
+        border-color: #fff;
+        text-shadow: 0 0 10px #fff;
+      }
+
+      .sys-log {
+        position: absolute;
+        bottom: 30px;
+        left: 30px;
+        font-family: var(--font-code);
+        font-size: 0.7rem;
+        color: #555;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .log-line {
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+      }
+
+      /* --- HUD LAYER --- */
+      #hud-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 2s ease;
+      }
+
+      /* BRANDING */
+      .brand-container {
+        position: absolute;
+        top: 40px;
+        left: 40px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .logo-box {
+        width: 80px;
+        height: 80px;
+        border: 1px solid var(--silver);
+        padding: 5px;
+        position: relative;
+        transition: transform 0.5s;
+      }
+      .logo-box:hover {
+        transform: rotate(5deg) scale(1.1);
+      }
+      .logo-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.2);
+        transition: filter 0.5s;
+      }
+      .logo-box:hover img {
+        filter: grayscale(0%);
+      }
+
+      .brand-text h1 {
+        font-family: var(--font-code);
+        font-size: 1.5rem;
+        letter-spacing: -1px;
+        margin-bottom: 5px;
+      }
+      .brand-text p {
+        font-family: var(--font-art);
+        font-style: italic;
+        color: #888;
+        letter-spacing: 2px;
+      }
+
+      /* MUSIC PLAYER */
+      #vinyl-player {
+        position: absolute;
+        bottom: 40px;
+        right: 40px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        pointer-events: auto;
+      }
+      .vinyl-disc {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: repeating-radial-gradient(
+          #111 0,
+          #111 2px,
+          #222 3px,
+          #222 4px
+        );
+        border: 2px solid #333;
+        position: relative;
+        animation: spin 5s linear infinite;
+        animation-play-state: paused;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      }
+      .vinyl-disc::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        background: var(--accent-red);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+      }
+      .playing .vinyl-disc {
+        animation-play-state: running;
+      }
+
+      .track-info {
+        text-align: right;
+      }
+      .track-title {
+        font-family: var(--font-code);
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: block;
+        color: var(--silver);
+      }
+      .track-artist {
+        font-family: var(--font-art);
+        font-size: 1rem;
+        color: #666;
+        font-style: italic;
+      }
+
+      /* LYRICS */
+      #lyrics-container {
+        position: absolute;
+        bottom: 15%;
+        width: 100%;
+        text-align: center;
+        mix-blend-mode: exclusion;
+      }
+      #lyrics-text {
+        font-family: var(--font-art);
+        font-size: 3.5rem;
+        color: #fff;
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(0.8) translateY(20px);
+        transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+      }
+      .lyrics-visible {
+        opacity: 1 !important;
+        filter: blur(0px) !important;
+        transform: scale(1) translateY(0) !important;
+      }
+
+      /* 3D CANVAS */
+      #webgl-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        filter: contrast(1.1) brightness(0.9);
+      }
+
+      /* YOUTUBE HIDDEN */
+      #dark-arts-player {
+        position: absolute;
+        top: -200vh;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* KEYFRAMES */
+      @keyframes glitch-skew {
+        0% {
+          transform: skew(0deg);
+        }
+        20% {
+          transform: skew(-2deg);
+        }
+        40% {
+          transform: skew(2deg);
+        }
+        60% {
+          transform: skew(-1deg);
+        }
+        80% {
+          transform: skew(1deg);
+        }
+        100% {
+          transform: skew(0deg);
+        }
+      }
+      @keyframes glitch-anim-1 {
+        0% {
+          clip-path: inset(20% 0 80% 0);
+        }
+        100% {
+          clip-path: inset(30% 0 30% 0);
+        }
+      }
+      @keyframes glitch-anim-2 {
+        0% {
+          clip-path: inset(10% 0 60% 0);
+        }
+        100% {
+          clip-path: inset(0% 0 0% 0);
+        }
+      }
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- CONFIGURATION -->
+    <script>
+      const CONFIG = {
+        logo: "https://sv2.anhsieuviet.com/2025/12/30/IMG_7497.jpg",
+        musicID: "uW2sP9bC5bM", // Ngọt - Bút Chì Bạc
+        artworks: [
+          "https://picsum.photos/id/10/800/1200",
+          "https://picsum.photos/id/100/800/1200",
+          "https://picsum.photos/id/1000/800/1200",
+          "https://picsum.photos/id/1002/800/1200",
+          "https://picsum.photos/id/1004/800/1200",
+          "https://picsum.photos/id/1005/800/1200",
+          "https://picsum.photos/id/1006/800/1200",
+        ],
+        timeline: [
+          { z: 5, text: "Chào mọi người..." },
+          { z: -20, text: "Mình là Nghị (9H)" },
+          { z: -50, text: "Đang nghe: 'Bút Chì Bạc' - Ngọt" },
+          { z: -80, text: "Một chút không gian hư ảo..." },
+          { z: -110, text: "Thế giới của những nét vẽ" },
+          { z: -150, text: "Cảm ơn đã ghé thăm." },
+        ],
+        endText: "NGHỊ ART\nTHE END",
+      };
+    </script>
+
+    <!-- CURSOR -->
+    <div id="cursor"></div>
+    <div id="cursor-dot"></div>
+
+    <!-- BOOT SCREEN -->
+    <div id="boot-screen">
+      <div class="glitch-wrapper">NGHỊ ART</div>
+      <div
+        style="
+          margin-top: 15px;
+          color: #888;
+          font-family: var(--font-code);
+          font-size: 0.9rem;
+        "
+      >
+        /// SYSTEM BOOT_SEQUENCE_INIT ///
+      </div>
+
+      <button id="start-btn">[ BƯỚC VÀO HƯ VÔ ]</button>
+
+      <div class="sys-log" id="sys-log"></div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud-layer">
+      <div class="brand-container">
+        <div class="logo-box">
+          <img
+            id="ui-logo"
+            src=""
+            onerror="this.src='https://ui-avatars.com/api/?name=N+A&background=random&color=fff'"
+          />
+        </div>
+        <div class="brand-text">
+          <h1>NGHỊ ART</h1>
+          <p>CLASS 9H // GALLERY</p>
+        </div>
+      </div>
+
+      <div id="lyrics-container">
+        <div id="lyrics-text"></div>
+      </div>
+
+      <div id="vinyl-player">
+        <div class="track-info">
+          <span class="track-title">Bút Chì Bạc</span>
+          <span class="track-artist">Ngọt</span>
+        </div>
+        <div class="vinyl-disc"></div>
+      </div>
+    </div>
+
+    <!-- 3D CANVAS -->
+    <div id="webgl-canvas"></div>
+
+    <!-- HIDDEN AUDIO -->
+    <div id="dark-arts-player"></div>
+
+    <!-- LIBS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script>
+      /**
+       * =================================================================================
+       * VOID ENGINE V4.0 (TITANIUM)
+       * - Fixed: createEndSign TypeError
+       * - Added: Advanced Glitch Shaders, Mouse Parallax, System Log
+       * =================================================================================
+       */
+
+      // 1. CURSOR & MOUSE LOGIC
+      const cursor = document.getElementById("cursor");
+      const cursorDot = document.getElementById("cursor-dot");
+      let mouseX = 0,
+        mouseY = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+        cursorDot.style.left = e.clientX + "px";
+        cursorDot.style.top = e.clientY + "px";
+
+        // Normalize mouse pos for parallax (-1 to 1)
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+      });
+
+      // 2. BOOT LOGS SIMULATION
+      const logs = [
+        "> Mount System: /dev/void...",
+        "> Loading Audio Driver: YOUTUBE_API_V3...",
+        "> Compiling GLSL Shaders...",
+        "> Loading Texture Assets...",
+        "> Ready.",
+      ];
+      const logContainer = document.getElementById("sys-log");
+      let logIdx = 0;
+
+      function addLog() {
+        if (logIdx < logs.length) {
+          const p = document.createElement("div");
+          p.className = "log-line";
+          p.innerText = logs[logIdx];
+          p.style.animationDelay = `${logIdx * 0.2}s`;
+          logContainer.appendChild(p);
+          logIdx++;
+          setTimeout(addLog, 300);
+        }
+      }
+      addLog();
+
+      // 3. SETUP DATA
+      document.getElementById("ui-logo").src = CONFIG.logo;
+
+      // 4. AUDIO ENGINE
+      let player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player("dark-arts-player", {
+          height: "100",
+          width: "100",
+          videoId: CONFIG.musicID,
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            loop: 1,
+            playlist: CONFIG.musicID,
+            modestbranding: 1,
+            rel: 0,
+          },
+          events: {
+            onReady: (e) => {
+              console.log("Audio Ready");
+              e.target.setVolume(90);
+            },
+          },
+        });
+      }
+
+      // 5. VOID ENGINE 3D
+      class VoidEngine {
+        constructor() {
+          this.scene = null;
+          this.camera = null;
+          this.renderer = null;
+          this.clock = new THREE.Clock();
+          this.tunnelLength = 400;
+          this.moving = false;
+          this.finalMesh = null;
+          this.floor = null;
+          this.particles = null;
+
+          // Shader: Liquid Silver Floor
+          this.floorVS = `
+                    varying vec2 vUv;
+                    varying float vElevation;
+                    uniform float uTime;
+                    void main() {
+                        vUv = uv;
+                        vec3 pos = position;
+                        float wave = sin(pos.x * 0.5 + uTime) * 0.2 + sin(pos.y * 0.5 + uTime * 0.5) * 0.2;
+                        pos.z += wave;
+                        vElevation = wave;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    }
+                `;
+          this.floorFS = `
+                    varying vec2 vUv;
+                    varying float vElevation;
+                    void main() {
+                        vec3 silver = vec3(0.8, 0.8, 0.9);
+                        vec3 dark = vec3(0.1, 0.1, 0.15);
+                        float mixVal = smoothstep(-0.2, 0.2, vElevation);
+                        vec3 col = mix(dark, silver, mixVal);
+                        float grid = step(0.95, fract(vUv.x * 20.0)) + step(0.95, fract(vUv.y * 50.0));
+                        gl_FragColor = vec4(col + grid * 0.2, 1.0);
+                    }
+                `;
+
+          this.init();
+        }
+
+        init() {
+          // Scene & Fog
+          this.scene = new THREE.Scene();
+          this.scene.fog = new THREE.FogExp2(0x050505, 0.015);
+
+          // Camera
+          this.camera = new THREE.PerspectiveCamera(
+            70,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+          );
+          this.camera.position.z = 10;
+
+          // Renderer
+          this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+          });
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          this.renderer.shadowMap.enabled = true;
+          this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+          document
+            .getElementById("webgl-canvas")
+            .appendChild(this.renderer.domElement);
+
+          // Build World
+          this.addLights();
+          this.createFloor();
+          this.createCeiling();
+          this.buildGallery();
+          this.addParticles();
+          this.createEndText(); // Đã sửa tên hàm này ở đây
+
+          window.addEventListener("resize", () => this.onResize());
+          this.loop();
+        }
+
+        addLights() {
+          const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+          this.scene.add(ambient);
+
+          const spotRed = new THREE.SpotLight(0x8a0000, 3);
+          spotRed.position.set(-15, 15, 5);
+          spotRed.castShadow = true;
+          this.scene.add(spotRed);
+
+          const spotBlue = new THREE.SpotLight(0x4455ff, 2);
+          spotBlue.position.set(15, 15, -100);
+          this.scene.add(spotBlue);
+
+          const camLight = new THREE.PointLight(0xffffff, 0.5, 20);
+          this.camera.add(camLight);
+          this.scene.add(this.camera);
+        }
+
+        createFloor() {
+          const geo = new THREE.PlaneGeometry(
+            40,
+            this.tunnelLength * 2,
+            64,
+            256
+          );
+          const mat = new THREE.ShaderMaterial({
+            vertexShader: this.floorVS,
+            fragmentShader: this.floorFS,
+            uniforms: { uTime: { value: 0 } },
+          });
+          this.floor = new THREE.Mesh(geo, mat);
+          this.floor.rotation.x = -Math.PI / 2;
+          this.floor.position.set(0, -4, -this.tunnelLength / 2);
+          this.scene.add(this.floor);
+        }
+
+        createCeiling() {
+          const geo = new THREE.PlaneGeometry(40, this.tunnelLength * 2);
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0x080808,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = Math.PI / 2;
+          mesh.position.set(0, 8, -this.tunnelLength / 2);
+          this.scene.add(mesh);
+        }
+
+        buildGallery() {
+          const loader = new THREE.TextureLoader();
+          const count = 40;
+          const spacing = this.tunnelLength / count;
+
+          for (let i = 0; i < count; i++) {
+            const url = CONFIG.artworks[i % CONFIG.artworks.length];
+            const z = -i * spacing;
+            const isLeft = i % 2 === 0;
+
+            loader.load(url, (tex) => {
+              const aspect = tex.image.width / tex.image.height;
+              const w = 4;
+              const h = w / aspect;
+
+              const geo = new THREE.PlaneGeometry(w, h);
+              const mat = new THREE.MeshStandardMaterial({
+                map: tex,
+                roughness: 0.4,
+              });
+              const mesh = new THREE.Mesh(geo, mat);
+
+              // Frame
+              const fGeo = new THREE.BoxGeometry(w + 0.4, h + 0.4, 0.2);
+              const fMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+              const frame = new THREE.Mesh(fGeo, fMat);
+              frame.position.z = -0.11;
+              mesh.add(frame);
+
+              // Wire
+              const wireGeo = new THREE.CylinderGeometry(0.01, 0.01, 10);
+              const wireMat = new THREE.MeshBasicMaterial({ color: 0x333 });
+              const wire = new THREE.Mesh(wireGeo, wireMat);
+              wire.position.y = 5;
+              mesh.add(wire);
+
+              mesh.position.set(isLeft ? -7 : 7, 0, z);
+              mesh.rotation.y = isLeft ? Math.PI / 6 : -Math.PI / 6;
+              mesh.castShadow = true;
+
+              this.scene.add(mesh);
+            });
+          }
+        }
+
+        addParticles() {
+          const count = 4000;
+          const geo = new THREE.BufferGeometry();
+          const pos = [];
+          for (let i = 0; i < count; i++) {
+            pos.push((Math.random() - 0.5) * 50);
+            pos.push((Math.random() - 0.5) * 40);
+            pos.push(-Math.random() * this.tunnelLength);
+          }
+          geo.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(pos, 3)
+          );
+          const mat = new THREE.PointsMaterial({
+            size: 0.05,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.3,
+          });
+          this.particles = new THREE.Points(geo, mat);
+          this.scene.add(this.particles);
+        }
+
+        // --- FIXED METHOD NAME ---
+        createEndText() {
+          const cvs = document.createElement("canvas");
+          cvs.width = 1024;
+          cvs.height = 1024;
+          const ctx = cvs.getContext("2d");
+          ctx.fillStyle = "transparent";
+          ctx.fillRect(0, 0, 1024, 1024);
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          ctx.font = 'bold 80px "Space Mono"';
+          ctx.shadowColor = "#fff";
+          ctx.shadowBlur = 20;
+
+          const lines = CONFIG.endText.split("\n");
+          lines.forEach((l, i) => ctx.fillText(l, 512, 400 + i * 100));
+
+          const tex = new THREE.CanvasTexture(cvs);
+          const mat = new THREE.MeshBasicMaterial({
+            map: tex,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+          });
+          this.finalMesh = new THREE.Mesh(new THREE.PlaneGeometry(15, 15), mat);
+          this.finalMesh.position.set(0, 0, -this.tunnelLength - 20);
+          this.scene.add(this.finalMesh);
+        }
+
+        startJourney() {
+          this.moving = true;
+        }
+
+        updateText(z) {
+          const el = document.getElementById("lyrics-text");
+          const item = CONFIG.timeline.find((t) => z <= t.z && z > t.z - 30);
+          if (item) {
+            if (el.innerText !== item.text) {
+              el.classList.remove("lyrics-visible");
+              setTimeout(() => {
+                el.innerHTML = item.text;
+                el.classList.add("lyrics-visible");
+              }, 500);
+            } else if (!el.classList.contains("lyrics-visible"))
+              el.classList.add("lyrics-visible");
+          } else el.classList.remove("lyrics-visible");
+        }
+
+        loop() {
+          requestAnimationFrame(() => this.loop());
+          const t = this.clock.getElapsedTime();
+
+          // Shader Time Update
+          if (this.floor) this.floor.material.uniforms.uTime.value = t;
+
+          // Move
+          if (this.moving) {
+            if (this.camera.position.z > -this.tunnelLength - 10) {
+              this.camera.position.z -= 0.12;
+
+              // Mouse Parallax + Walk Bobbing
+              this.camera.position.x +=
+                (mouseX * 2 - this.camera.position.x) * 0.05;
+              this.camera.position.y = Math.sin(t * 3) * 0.2 + mouseY * 1;
+
+              this.camera.rotation.z = mouseX * 0.05;
+
+              this.updateText(this.camera.position.z);
+            } else {
+              // End
+              this.camera.position.z = THREE.MathUtils.lerp(
+                this.camera.position.z,
+                -this.tunnelLength - 18,
+                0.02
+              );
+              if (this.finalMesh) {
+                this.finalMesh.material.opacity = Math.min(
+                  this.finalMesh.material.opacity + 0.01,
+                  1
+                );
+                this.finalMesh.rotation.y = Math.sin(t) * 0.1;
+              }
+            }
+          } else {
+            // Idle
+            this.camera.position.z = 10 + Math.sin(t) * 0.5;
+            this.camera.position.x += (mouseX - this.camera.position.x) * 0.05;
+            this.camera.position.y += (mouseY - this.camera.position.y) * 0.05;
+          }
+
+          this.renderer.render(this.scene, this.camera);
+        }
+
+        onResize() {
+          this.camera.aspect = window.innerWidth / window.innerHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      }
+
+      // --- EXECUTION ---
+      const engine = new VoidEngine();
+
+      document.getElementById("start-btn").addEventListener("click", () => {
+        // Audio
+        if (player && player.playVideo) {
+          player.unMute();
+          player.playVideo();
+          document.getElementById("vinyl-player").classList.add("playing");
+        }
+        // UI Transition
+        const boot = document.getElementById("boot-screen");
+        boot.style.opacity = 0;
+        setTimeout(() => (boot.style.display = "none"), 1000);
+        document.getElementById("hud-layer").style.opacity = 1;
+
+        // Start
+        engine.startJourney();
+      });
+    </script>
+  </body>
+</html>
